@@ -1,4 +1,272 @@
-﻿"use client";
-import { useState } from "react";
-interface InvoiceItem { id: number; name: string; hsn: string; qty: number; rate: number; gstRate: number; amount: number; gstAmount: number; totalAmount: number; }
-export default function SaleInvoice() { const [invoiceData, setInvoiceData] = useState({ customerName: "", customerState: "", invoiceNumber: "INV-2025-001", invoiceDate: new Date().toISOString().split("T")[0], paymentMode: "cash", companyState: "Himachal Pradesh", }); const [items, setItems] = useState<InvoiceItem[]>([{ id: 1, name: "", hsn: "", qty: 1, rate: 0, gstRate: 18, amount: 0, gstAmount: 0, totalAmount: 0 }]); const states = ["Andhra Pradesh","Assam","Bihar","Delhi","Goa","Gujarat","Haryana","Himachal Pradesh","Karnataka","Kerala","Madhya Pradesh","Maharashtra","Odisha","Punjab","Rajasthan","Tamil Nadu","Telangana","Uttar Pradesh","West Bengal"]; const gstRates = [0, 5, 12, 18, 28]; const calcItem = (item: InvoiceItem): InvoiceItem => { const amount = item.qty * item.rate; const gstAmount = (amount * item.gstRate) / 100; return { ...item, amount, gstAmount, totalAmount: amount + gstAmount }; }; const updateItem = (id: number, field: string, value: string | number) => { setItems(items.map((item) => item.id === id ? calcItem({ ...item, [field]: value }) : item)); }; const addItem = () => { setItems([...items, { id: Date.now(), name: "", hsn: "", qty: 1, rate: 0, gstRate: 18, amount: 0, gstAmount: 0, totalAmount: 0 }]); }; const removeItem = (id: number) => { if (items.length > 1) setItems(items.filter((i) => i.id !== id)); }; const subtotal = items.reduce((s, i) => s + i.amount, 0); const isInter = invoiceData.customerState !== "" && invoiceData.customerState !== invoiceData.companyState; const totalGST = items.reduce((s, i) => s + i.gstAmount, 0); const cgst = isInter ? 0 : totalGST / 2; const sgst = isInter ? 0 : totalGST / 2; const igst = isInter ? totalGST : 0; const grand = Math.round(subtotal + totalGST); const fmt = (n: number) => new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR" }).format(n); const handleSubmit = (e: React.FormEvent) => { e.preventDefault(); alert("Invoice Saved! Total: " + fmt(grand)); }; return ( <div className="min-h-screen bg-gray-100 p-6"><div className="max-w-5xl mx-auto"><div className="bg-white rounded-xl shadow p-6 mb-6"><h1 className="text-2xl font-bold text-black">New Sale Invoice</h1><p className="text-sm text-black">Fill the form, GST will be auto calculated</p></div><form onSubmit={handleSubmit}><div className="bg-white rounded-xl shadow p-6 mb-6"><h2 className="text-lg font-bold text-black mb-4">Invoice Details</h2><div className="grid grid-cols-3 gap-4"><div><label className="block text-sm text-black mb-1">Invoice Number</label><input type="text" value={invoiceData.invoiceNumber} className="w-full px-4 py-2 border rounded-lg text-black bg-gray-50" readOnly /></div><div><label className="block text-sm text-black mb-1">Invoice Date</label><input type="date" value={invoiceData.invoiceDate} onChange={(e) => setInvoiceData({ ...invoiceData, invoiceDate: e.target.value })} className="w-full px-4 py-2 border rounded-lg text-black" /></div><div><label className="block text-sm text-black mb-1">Payment Mode</label><select value={invoiceData.paymentMode} onChange={(e) => setInvoiceData({ ...invoiceData, paymentMode: e.target.value })} className="w-full px-4 py-2 border rounded-lg text-black bg-white"><option value="cash">Cash</option><option value="bank">Bank</option><option value="upi">UPI</option><option value="credit">Credit</option></select></div></div></div><div className="bg-white rounded-xl shadow p-6 mb-6"><h2 className="text-lg font-bold text-black mb-4">Customer Details</h2><div className="grid grid-cols-2 gap-4"><div><label className="block text-sm text-black mb-1">Customer Name *</label><input type="text" value={invoiceData.customerName} onChange={(e) => setInvoiceData({ ...invoiceData, customerName: e.target.value })} placeholder="Customer name" className="w-full px-4 py-2 border rounded-lg text-black" required /></div><div><label className="block text-sm text-black mb-1">Customer State *</label><select value={invoiceData.customerState} onChange={(e) => setInvoiceData({ ...invoiceData, customerState: e.target.value })} className="w-full px-4 py-2 border rounded-lg text-black bg-white" required><option value="">-- Select --</option>{states.map((s) => (<option key={s} value={s}>{s}</option>))}</select></div></div>{invoiceData.customerState && (<div className="mt-4 p-3 rounded-lg bg-gray-50 border"><p className="text-sm font-semibold text-black">{isInter ? "IGST will apply (Interstate)" : "CGST + SGST will apply (Same State)"}</p></div>)}</div><div className="bg-white rounded-xl shadow p-6 mb-6"><h2 className="text-lg font-bold text-black mb-4">Items</h2><div className="grid grid-cols-10 gap-2 mb-2 text-xs font-bold text-black bg-gray-100 p-2 rounded"><div className="col-span-2">Item</div><div>HSN</div><div>Qty</div><div>Rate</div><div>GST%</div><div>Amount</div><div>GST</div><div>Total</div><div></div></div>{items.map((item) => (<div key={item.id} className="grid grid-cols-10 gap-2 mb-2 items-center"><div className="col-span-2"><input type="text" value={item.name} onChange={(e) => updateItem(item.id, "name", e.target.value)} placeholder="Item" className="w-full px-2 py-2 border rounded text-sm text-black" /></div><div><input type="text" value={item.hsn} onChange={(e) => updateItem(item.id, "hsn", e.target.value)} placeholder="HSN" className="w-full px-2 py-2 border rounded text-sm text-black" /></div><div><input type="number" value={item.qty} onChange={(e) => updateItem(item.id, "qty", parseFloat(e.target.value) || 0)} className="w-full px-2 py-2 border rounded text-sm text-black" /></div><div><input type="number" value={item.rate} onChange={(e) => updateItem(item.id, "rate", parseFloat(e.target.value) || 0)} placeholder="0" className="w-full px-2 py-2 border rounded text-sm text-black" /></div><div><select value={item.gstRate} onChange={(e) => updateItem(item.id, "gstRate", parseFloat(e.target.value))} className="w-full py-2 border rounded text-sm text-black bg-white">{gstRates.map((r) => (<option key={r} value={r}>{r}%</option>))}</select></div><div><p className="text-sm text-black">{fmt(item.amount)}</p></div><div><p className="text-sm text-black">{fmt(item.gstAmount)}</p></div><div><p className="text-sm font-bold text-black">{fmt(item.totalAmount)}</p></div><div><button type="button" onClick={() => removeItem(item.id)} className="text-black font-bold">X</button></div></div>))}<button type="button" onClick={addItem} className="mt-3 text-sm text-black border-2 border-dashed border-gray-300 px-4 py-2 rounded-lg w-full">+ Add Item</button></div><div className="bg-white rounded-xl shadow p-6 mb-6"><div className="max-w-sm ml-auto"><h2 className="text-lg font-bold text-black mb-4">Summary</h2><div className="space-y-2"><div className="flex justify-between"><span className="text-black">Subtotal</span><span className="font-medium text-black">{fmt(subtotal)}</span></div>{isInter ? <div className="flex justify-between"><span className="text-black">IGST</span><span className="text-black">{fmt(igst)}</span></div> : <><div className="flex justify-between"><span className="text-black">CGST</span><span className="text-black">{fmt(cgst)}</span></div><div className="flex justify-between"><span className="text-black">SGST</span><span className="text-black">{fmt(sgst)}</span></div></>}<div className="border-t-2 pt-3 flex justify-between"><span className="text-lg font-bold text-black">Grand Total</span><span className="text-lg font-bold text-black">{fmt(grand)}</span></div></div></div></div><div className="bg-white rounded-xl shadow p-6 mb-6 border-2 border-dashed"><h2 className="text-lg font-bold text-black mb-2">Auto Journal Entry</h2><table className="w-full text-sm"><thead><tr className="bg-gray-100"><th className="p-2 text-left text-black">Account</th><th className="p-2 text-left text-black">Debit</th><th className="p-2 text-left text-black">Credit</th></tr></thead><tbody><tr className="border-b"><td className="p-2 text-black">{invoiceData.customerName || "Customer"} A/c</td><td className="p-2 font-bold text-black">{fmt(grand)}</td><td className="p-2 text-black">-</td></tr><tr className="border-b"><td className="p-2 text-black">Sales A/c</td><td className="p-2 text-black">-</td><td className="p-2 font-bold text-black">{fmt(subtotal)}</td></tr>{isInter ? <tr className="border-b"><td className="p-2 text-black">IGST Output</td><td className="p-2 text-black">-</td><td className="p-2 font-bold text-black">{fmt(igst)}</td></tr> : <><tr className="border-b"><td className="p-2 text-black">CGST Output</td><td className="p-2 text-black">-</td><td className="p-2 font-bold text-black">{fmt(cgst)}</td></tr><tr className="border-b"><td className="p-2 text-black">SGST Output</td><td className="p-2 text-black">-</td><td className="p-2 font-bold text-black">{fmt(sgst)}</td></tr></>}</tbody></table></div><div className="flex space-x-4 mb-10"><button type="submit" className="flex-1 bg-blue-600 text-white py-3 rounded-xl font-bold text-lg hover:bg-blue-700 shadow-lg">Save Invoice</button><button type="button" className="px-8 bg-gray-200 text-black py-3 rounded-xl font-bold">Print</button></div></form></div></div> ); }
+﻿'use client'
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { supabase } from '@/lib/supabase'
+
+export default function SaleInvoice() {
+  const router = useRouter()
+  const [invoice, setInvoice] = useState({
+    number: 'INV-001',
+    date: new Date().toISOString().split('T')[0],
+    party_name: '',
+    items: [{ description: '', quantity: 1, rate: 0, amount: 0, gst_rate: 18, gst_amount: 0 }],
+    narration: ''
+  })
+  const [saved, setSaved] = useState(false)
+  const [loading, setLoading] = useState(false)
+
+  const updateItem = (index: number, field: string, value: string | number) => {
+    const newItems = [...invoice.items]
+    newItems[index] = { ...newItems[index], [field]: value }
+    if (field === 'quantity' || field === 'rate' || field === 'gst_rate') {
+      const qty = field === 'quantity' ? Number(value) : newItems[index].quantity
+      const rate = field === 'rate' ? Number(value) : newItems[index].rate
+      const gstRate = field === 'gst_rate' ? Number(value) : newItems[index].gst_rate
+      const amount = qty * rate
+      const gstAmount = (amount * gstRate) / 100
+      newItems[index].amount = amount
+      newItems[index].gst_amount = gstAmount
+    }
+    setInvoice({ ...invoice, items: newItems })
+  }
+
+  const addItem = () => {
+    setInvoice({
+      ...invoice,
+      items: [...invoice.items, { description: '', quantity: 1, rate: 0, amount: 0, gst_rate: 18, gst_amount: 0 }]
+    })
+  }
+
+  const removeItem = (index: number) => {
+    if (invoice.items.length > 1) {
+      const newItems = invoice.items.filter((_, i) => i !== index)
+      setInvoice({ ...invoice, items: newItems })
+    }
+  }
+
+  const subtotal = invoice.items.reduce((sum, item) => sum + item.amount, 0)
+  const totalGst = invoice.items.reduce((sum, item) => sum + item.gst_amount, 0)
+  const grandTotal = subtotal + totalGst
+
+  const saveInvoice = async () => {
+    if (!invoice.party_name) { alert('Party name daalo!'); return }
+    setLoading(true)
+    try {
+      const { data: txn, error: txnError } = await supabase
+        .from('transactions')
+        .insert({
+          type: 'sale',
+          number: invoice.number,
+          date: invoice.date,
+          party_name: invoice.party_name,
+          amount: subtotal,
+          gst_rate: invoice.items[0]?.gst_rate || 0,
+          gst_amount: totalGst,
+          total_amount: grandTotal,
+          narration: invoice.narration,
+          status: 'active'
+        })
+        .select()
+        .single()
+
+      if (txnError) throw txnError
+
+      for (const item of invoice.items) {
+        await supabase.from('transaction_items').insert({
+          transaction_id: txn.id,
+          description: item.description,
+          quantity: item.quantity,
+          rate: item.rate,
+          amount: item.amount,
+          gst_rate: item.gst_rate,
+          gst_amount: item.gst_amount
+        })
+      }
+
+      setSaved(true)
+      setTimeout(() => setSaved(false), 3000)
+      setInvoice({
+        number: `INV-${String(Date.now()).slice(-4)}`,
+        date: new Date().toISOString().split('T')[0],
+        party_name: '',
+        items: [{ description: '', quantity: 1, rate: 0, amount: 0, gst_rate: 18, gst_amount: 0 }],
+        narration: ''
+      })
+    } catch (error) {
+      console.error('Error:', error)
+      alert('Error saving invoice!')
+    }
+    setLoading(false)
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50 p-4">
+      <div className="max-w-5xl mx-auto">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold text-black">Sale Invoice</h1>
+          <button
+            onClick={() => router.push('/dashboard')}
+            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+          >
+            ← Dashboard
+          </button>
+        </div>
+
+        {saved && (
+          <div className="bg-green-100 border border-green-500 text-green-700 px-4 py-3 rounded mb-4 text-center font-bold">
+            ✅ Invoice Saved Successfully!
+          </div>
+        )}
+
+        <div className="bg-white rounded-lg shadow p-6 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div>
+              <label className="block text-black font-semibold mb-1">Invoice Number</label>
+              <input
+                type="text"
+                value={invoice.number}
+                onChange={(e) => setInvoice({ ...invoice, number: e.target.value })}
+                className="w-full border border-gray-300 rounded px-3 py-2 text-black"
+              />
+            </div>
+            <div>
+              <label className="block text-black font-semibold mb-1">Date</label>
+              <input
+                type="date"
+                value={invoice.date}
+                onChange={(e) => setInvoice({ ...invoice, date: e.target.value })}
+                className="w-full border border-gray-300 rounded px-3 py-2 text-black"
+              />
+            </div>
+            <div>
+              <label className="block text-black font-semibold mb-1">Party Name *</label>
+              <input
+                type="text"
+                value={invoice.party_name}
+                onChange={(e) => setInvoice({ ...invoice, party_name: e.target.value })}
+                placeholder="Customer name"
+                className="w-full border border-gray-300 rounded px-3 py-2 text-black"
+              />
+            </div>
+          </div>
+
+          <h2 className="text-lg font-bold text-black mb-3">Items</h2>
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse border border-gray-300">
+              <thead>
+                <tr className="bg-blue-600 text-white">
+                  <th className="border border-gray-300 px-3 py-2 text-left">Description</th>
+                  <th className="border border-gray-300 px-3 py-2 text-center w-20">Qty</th>
+                  <th className="border border-gray-300 px-3 py-2 text-center w-28">Rate</th>
+                  <th className="border border-gray-300 px-3 py-2 text-center w-28">Amount</th>
+                  <th className="border border-gray-300 px-3 py-2 text-center w-24">GST %</th>
+                  <th className="border border-gray-300 px-3 py-2 text-center w-28">GST Amt</th>
+                  <th className="border border-gray-300 px-3 py-2 text-center w-28">Total</th>
+                  <th className="border border-gray-300 px-3 py-2 text-center w-16">X</th>
+                </tr>
+              </thead>
+              <tbody>
+                {invoice.items.map((item, index) => (
+                  <tr key={index}>
+                    <td className="border border-gray-300 px-2 py-1">
+                      <input
+                        type="text"
+                        value={item.description}
+                        onChange={(e) => updateItem(index, 'description', e.target.value)}
+                        placeholder="Item name"
+                        className="w-full border-none outline-none text-black"
+                      />
+                    </td>
+                    <td className="border border-gray-300 px-2 py-1">
+                      <input
+                        type="number"
+                        value={item.quantity}
+                        onChange={(e) => updateItem(index, 'quantity', Number(e.target.value))}
+                        className="w-full text-center border-none outline-none text-black"
+                      />
+                    </td>
+                    <td className="border border-gray-300 px-2 py-1">
+                      <input
+                        type="number"
+                        value={item.rate}
+                        onChange={(e) => updateItem(index, 'rate', Number(e.target.value))}
+                        className="w-full text-center border-none outline-none text-black"
+                      />
+                    </td>
+                    <td className="border border-gray-300 px-2 py-1 text-center text-black font-semibold">
+                      ₹{item.amount.toFixed(2)}
+                    </td>
+                    <td className="border border-gray-300 px-2 py-1">
+                      <select
+                        value={item.gst_rate}
+                        onChange={(e) => updateItem(index, 'gst_rate', Number(e.target.value))}
+                        className="w-full text-center border-none outline-none text-black"
+                      >
+                        <option value={0}>0%</option>
+                        <option value={5}>5%</option>
+                        <option value={12}>12%</option>
+                        <option value={18}>18%</option>
+                        <option value={28}>28%</option>
+                      </select>
+                    </td>
+                    <td className="border border-gray-300 px-2 py-1 text-center text-black">
+                      ₹{item.gst_amount.toFixed(2)}
+                    </td>
+                    <td className="border border-gray-300 px-2 py-1 text-center text-black font-bold">
+                      ₹{(item.amount + item.gst_amount).toFixed(2)}
+                    </td>
+                    <td className="border border-gray-300 px-2 py-1 text-center">
+                      <button onClick={() => removeItem(index)} className="text-red-600 font-bold hover:text-red-800">✕</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <button onClick={addItem} className="mt-3 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+            + Add Item
+          </button>
+
+          <div className="mt-6 flex justify-end">
+            <div className="w-72 space-y-2">
+              <div className="flex justify-between text-black">
+                <span>Subtotal:</span>
+                <span className="font-semibold">₹{subtotal.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between text-black">
+                <span>Total GST:</span>
+                <span className="font-semibold">₹{totalGst.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between text-black text-xl font-bold border-t border-gray-300 pt-2">
+                <span>Grand Total:</span>
+                <span>₹{grandTotal.toFixed(2)}</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-4">
+            <label className="block text-black font-semibold mb-1">Narration</label>
+            <textarea
+              value={invoice.narration}
+              onChange={(e) => setInvoice({ ...invoice, narration: e.target.value })}
+              placeholder="Any notes..."
+              className="w-full border border-gray-300 rounded px-3 py-2 text-black"
+              rows={2}
+            />
+          </div>
+
+          <div className="mt-6 text-center">
+            <button
+              onClick={saveInvoice}
+              disabled={loading}
+              className="bg-blue-600 text-white px-8 py-3 rounded text-lg font-bold hover:bg-blue-700 disabled:bg-gray-400"
+            >
+              {loading ? 'Saving...' : '💾 Save Invoice'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}

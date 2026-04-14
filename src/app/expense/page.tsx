@@ -1,3 +1,227 @@
-﻿"use client";
-import { useState } from "react";
-export default function Expense() { const [formData, setFormData] = useState({ category: "", customCategory: "", amount: "", gstApplicable: "no", gstRate: 18, date: new Date().toISOString().split("T")[0], paidVia: "cash", bankName: "", referenceNo: "", billNumber: "", notes: "", }); const categories = ["Rent", "Electricity", "Telephone and Internet", "Office Supplies", "Travelling", "Petrol and Diesel", "Printing and Stationery", "Repair and Maintenance", "Salary", "Professional Fees", "Insurance", "Postage and Courier", "Advertisement", "Bank Charges", "Food and Beverages", "Miscellaneous", "Other"]; const gstRates = [0, 5, 12, 18, 28]; const amount = parseFloat(formData.amount) || 0; const gstAmount = formData.gstApplicable === "yes" ? Math.round(amount * formData.gstRate / (100 + formData.gstRate) * 100) / 100 : 0; const baseAmount = amount - gstAmount; const cgst = gstAmount / 2; const sgst = gstAmount / 2; const fmt = (n: number) => new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR" }).format(n); const handleSubmit = (e: React.FormEvent) => { e.preventDefault(); alert("Expense Saved!\n\nCategory: " + formData.category + "\nAmount: " + fmt(amount) + (formData.gstApplicable === "yes" ? "\nGST Input Credit: " + fmt(gstAmount) : "") + "\nPaid Via: " + formData.paidVia + "\n\nJournal Entry Created!"); }; return ( <div className="min-h-screen bg-gray-100 p-6"><div className="max-w-3xl mx-auto"><div className="bg-white rounded-xl shadow p-6 mb-6"><div className="flex justify-between items-center"><div><h1 className="text-2xl font-bold text-black">New Expense</h1><p className="text-sm text-black">Record any business expense</p></div><a href="/dashboard" className="text-sm text-black border border-gray-300 px-4 py-2 rounded-lg">Back to Dashboard</a></div></div><form onSubmit={handleSubmit}><div className="bg-white rounded-xl shadow p-6 mb-6"><h2 className="text-lg font-bold text-black mb-4">Expense Details</h2><div className="grid grid-cols-2 gap-4"><div><label className="block text-sm text-black mb-1">Expense Category *</label><select value={formData.category} onChange={(e) => setFormData({ ...formData, category: e.target.value })} className="w-full px-4 py-2 border rounded-lg text-black bg-white" required><option value="">-- Select Category --</option>{categories.map((cat) => (<option key={cat} value={cat}>{cat}</option>))}</select></div>{formData.category === "Other" && (<div><label className="block text-sm text-black mb-1">Specify Category *</label><input type="text" value={formData.customCategory} onChange={(e) => setFormData({ ...formData, customCategory: e.target.value })} placeholder="Enter category name" className="w-full px-4 py-2 border rounded-lg text-black" required /></div>)}<div><label className="block text-sm text-black mb-1">Amount (Total including GST if any) *</label><input type="number" value={formData.amount} onChange={(e) => setFormData({ ...formData, amount: e.target.value })} placeholder="Enter total amount" className="w-full px-4 py-2 border rounded-lg text-black" required /></div><div><label className="block text-sm text-black mb-1">Expense Date</label><input type="date" value={formData.date} onChange={(e) => setFormData({ ...formData, date: e.target.value })} className="w-full px-4 py-2 border rounded-lg text-black" /></div><div><label className="block text-sm text-black mb-1">Paid Via *</label><select value={formData.paidVia} onChange={(e) => setFormData({ ...formData, paidVia: e.target.value })} className="w-full px-4 py-2 border rounded-lg text-black bg-white"><option value="cash">Cash</option><option value="bank">Bank Transfer</option><option value="upi">UPI</option><option value="cheque">Cheque</option><option value="credit_card">Credit Card</option></select></div><div><label className="block text-sm text-black mb-1">Bill / Receipt Number</label><input type="text" value={formData.billNumber} onChange={(e) => setFormData({ ...formData, billNumber: e.target.value })} placeholder="Bill or receipt number" className="w-full px-4 py-2 border rounded-lg text-black" /></div></div></div><div className="bg-white rounded-xl shadow p-6 mb-6"><h2 className="text-lg font-bold text-black mb-4">GST on Expense</h2><div className="grid grid-cols-2 gap-4"><div><label className="block text-sm text-black mb-1">GST Applicable on this expense?</label><select value={formData.gstApplicable} onChange={(e) => setFormData({ ...formData, gstApplicable: e.target.value })} className="w-full px-4 py-2 border rounded-lg text-black bg-white"><option value="no">No GST</option><option value="yes">Yes, GST included in amount</option></select></div>{formData.gstApplicable === "yes" && (<div><label className="block text-sm text-black mb-1">GST Rate</label><select value={formData.gstRate} onChange={(e) => setFormData({ ...formData, gstRate: parseFloat(e.target.value) })} className="w-full px-4 py-2 border rounded-lg text-black bg-white">{gstRates.map((r) => (<option key={r} value={r}>{r}%</option>))}</select></div>)}</div>{formData.gstApplicable === "yes" && amount > 0 && (<div className="mt-4 p-4 bg-gray-50 rounded-lg border"><div className="grid grid-cols-3 gap-4"><div><p className="text-xs text-black">Base Amount</p><p className="text-lg font-bold text-black">{fmt(baseAmount)}</p></div><div><p className="text-xs text-black">GST ({formData.gstRate}%)</p><p className="text-lg font-bold text-black">{fmt(gstAmount)}</p></div><div><p className="text-xs text-black">Total Amount</p><p className="text-lg font-bold text-black">{fmt(amount)}</p></div></div><p className="text-xs text-black mt-2">ITC (Input Tax Credit) of {fmt(gstAmount)} can be claimed</p></div>)}</div><div className="bg-white rounded-xl shadow p-6 mb-6"><div className="max-w-sm ml-auto"><h2 className="text-lg font-bold text-black mb-4">Expense Summary</h2><div className="space-y-2">{formData.gstApplicable === "yes" ? (<><div className="flex justify-between"><span className="text-black">Base Amount</span><span className="font-medium text-black">{fmt(baseAmount)}</span></div><div className="flex justify-between"><span className="text-black">CGST</span><span className="text-black">{fmt(cgst)}</span></div><div className="flex justify-between"><span className="text-black">SGST</span><span className="text-black">{fmt(sgst)}</span></div></>) : null}<div className="border-t-2 pt-3 flex justify-between"><span className="text-lg font-bold text-black">Total Expense</span><span className="text-lg font-bold text-black">{fmt(amount)}</span></div></div></div></div><div className="bg-white rounded-xl shadow p-6 mb-6 border-2 border-dashed"><h2 className="text-lg font-bold text-black mb-2">Auto Journal Entry</h2><table className="w-full text-sm"><thead><tr className="bg-gray-100"><th className="p-2 text-left text-black">Account</th><th className="p-2 text-left text-black">Debit</th><th className="p-2 text-left text-black">Credit</th></tr></thead><tbody><tr className="border-b"><td className="p-2 text-black">{formData.category || "Expense"} A/c</td><td className="p-2 font-bold text-black">{fmt(formData.gstApplicable === "yes" ? baseAmount : amount)}</td><td className="p-2 text-black">-</td></tr>{formData.gstApplicable === "yes" && (<><tr className="border-b"><td className="p-2 text-black">CGST Input A/c</td><td className="p-2 font-bold text-black">{fmt(cgst)}</td><td className="p-2 text-black">-</td></tr><tr className="border-b"><td className="p-2 text-black">SGST Input A/c</td><td className="p-2 font-bold text-black">{fmt(sgst)}</td><td className="p-2 text-black">-</td></tr></>)}<tr className="border-b"><td className="p-2 text-black">{formData.paidVia === "cash" ? "Cash" : "Bank"} A/c</td><td className="p-2 text-black">-</td><td className="p-2 font-bold text-black">{fmt(amount)}</td></tr></tbody></table></div><div className="bg-white rounded-xl shadow p-6 mb-6"><label className="block text-sm text-black mb-1">Notes (Optional)</label><textarea value={formData.notes} onChange={(e) => setFormData({ ...formData, notes: e.target.value })} placeholder="Any additional notes about this expense" rows={3} className="w-full px-4 py-2 border rounded-lg text-black resize-none" /></div><div className="flex space-x-4 mb-10"><button type="submit" className="flex-1 bg-blue-600 text-white py-3 rounded-xl font-bold text-lg hover:bg-blue-700 shadow-lg">Save Expense</button></div></form></div></div> ); }
+﻿'use client'
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { supabase } from '@/lib/supabase'
+
+export default function Expense() {
+  const router = useRouter()
+  const [expense, setExpense] = useState({
+    number: 'EXP-001',
+    date: new Date().toISOString().split('T')[0],
+    category: 'office',
+    party_name: '',
+    amount: 0,
+    gst_applicable: false,
+    gst_rate: 18,
+    gst_amount: 0,
+    total_amount: 0,
+    payment_mode: 'bank',
+    narration: ''
+  })
+  const [saved, setSaved] = useState(false)
+  const [loading, setLoading] = useState(false)
+
+  const updateAmount = (value: number) => {
+    const gstAmount = expense.gst_applicable ? (value * expense.gst_rate) / 100 : 0
+    setExpense({ ...expense, amount: value, gst_amount: gstAmount, total_amount: value + gstAmount })
+  }
+
+  const toggleGST = (checked: boolean) => {
+    const gstAmount = checked ? (expense.amount * expense.gst_rate) / 100 : 0
+    setExpense({ ...expense, gst_applicable: checked, gst_amount: gstAmount, total_amount: expense.amount + gstAmount })
+  }
+
+  const updateGSTRate = (rate: number) => {
+    const gstAmount = expense.gst_applicable ? (expense.amount * rate) / 100 : 0
+    setExpense({ ...expense, gst_rate: rate, gst_amount: gstAmount, total_amount: expense.amount + gstAmount })
+  }
+
+  const saveExpense = async () => {
+    if (!expense.party_name) { alert('Party name daalo!'); return }
+    if (expense.amount <= 0) { alert('Amount daalo!'); return }
+    setLoading(true)
+    try {
+      await supabase.from('transactions').insert({
+        type: 'expense',
+        number: expense.number,
+        date: expense.date,
+        party_name: expense.party_name,
+        amount: expense.amount,
+        gst_rate: expense.gst_applicable ? expense.gst_rate : 0,
+        gst_amount: expense.gst_amount,
+        total_amount: expense.gst_applicable ? expense.total_amount : expense.amount,
+        narration: `${expense.category.toUpperCase()} | ${expense.payment_mode.toUpperCase()} | ${expense.narration}`,
+        status: 'active'
+      })
+
+      setSaved(true)
+      setTimeout(() => setSaved(false), 3000)
+      setExpense({
+        number: `EXP-${String(Date.now()).slice(-4)}`,
+        date: new Date().toISOString().split('T')[0],
+        category: 'office',
+        party_name: '',
+        amount: 0,
+        gst_applicable: false,
+        gst_rate: 18,
+        gst_amount: 0,
+        total_amount: 0,
+        payment_mode: 'bank',
+        narration: ''
+      })
+    } catch (error) {
+      console.error('Error:', error)
+      alert('Error saving expense!')
+    }
+    setLoading(false)
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50 p-4">
+      <div className="max-w-3xl mx-auto">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold text-black">Expense Voucher</h1>
+          <button
+            onClick={() => router.push('/dashboard')}
+            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+          >
+            ← Dashboard
+          </button>
+        </div>
+
+        {saved && (
+          <div className="bg-green-100 border border-green-500 text-green-700 px-4 py-3 rounded mb-4 text-center font-bold">
+            ✅ Expense Saved Successfully!
+          </div>
+        )}
+
+        <div className="bg-white rounded-lg shadow p-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div>
+              <label className="block text-black font-semibold mb-1">Expense Number</label>
+              <input type="text" value={expense.number}
+                onChange={(e) => setExpense({ ...expense, number: e.target.value })}
+                className="w-full border border-gray-300 rounded px-3 py-2 text-black" />
+            </div>
+            <div>
+              <label className="block text-black font-semibold mb-1">Date</label>
+              <input type="date" value={expense.date}
+                onChange={(e) => setExpense({ ...expense, date: e.target.value })}
+                className="w-full border border-gray-300 rounded px-3 py-2 text-black" />
+            </div>
+            <div>
+              <label className="block text-black font-semibold mb-1">Category</label>
+              <select value={expense.category}
+                onChange={(e) => setExpense({ ...expense, category: e.target.value })}
+                className="w-full border border-gray-300 rounded px-3 py-2 text-black">
+                <option value="office">Office Expense</option>
+                <option value="rent">Rent</option>
+                <option value="salary">Salary</option>
+                <option value="travel">Travel</option>
+                <option value="telephone">Telephone</option>
+                <option value="internet">Internet</option>
+                <option value="electricity">Electricity</option>
+                <option value="repair">Repair & Maintenance</option>
+                <option value="printing">Printing & Stationery</option>
+                <option value="transport">Transport</option>
+                <option value="professional">Professional Fees</option>
+                <option value="insurance">Insurance</option>
+                <option value="misc">Miscellaneous</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <div>
+              <label className="block text-black font-semibold mb-1">Party Name *</label>
+              <input type="text" value={expense.party_name}
+                onChange={(e) => setExpense({ ...expense, party_name: e.target.value })}
+                placeholder="Paid to whom"
+                className="w-full border border-gray-300 rounded px-3 py-2 text-black" />
+            </div>
+            <div>
+              <label className="block text-black font-semibold mb-1">Amount (₹) *</label>
+              <input type="number" value={expense.amount}
+                onChange={(e) => updateAmount(Number(e.target.value))}
+                className="w-full border border-gray-300 rounded px-3 py-2 text-black text-lg" />
+            </div>
+          </div>
+
+          <div className="bg-gray-50 border border-gray-200 rounded p-4 mb-6">
+            <div className="flex items-center mb-4">
+              <input type="checkbox" checked={expense.gst_applicable}
+                onChange={(e) => toggleGST(e.target.checked)} className="w-5 h-5 mr-3" />
+              <label className="text-black font-bold text-lg">GST Applicable?</label>
+            </div>
+            {expense.gst_applicable && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-black font-semibold mb-1">GST Rate (%)</label>
+                  <select value={expense.gst_rate}
+                    onChange={(e) => updateGSTRate(Number(e.target.value))}
+                    className="w-full border border-gray-300 rounded px-3 py-2 text-black">
+                    <option value={5}>5%</option>
+                    <option value={12}>12%</option>
+                    <option value={18}>18%</option>
+                    <option value={28}>28%</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-black font-semibold mb-1">GST Amount</label>
+                  <input type="text" value={`₹${expense.gst_amount.toFixed(2)}`} readOnly
+                    className="w-full border border-gray-300 rounded px-3 py-2 text-black bg-gray-100 font-bold" />
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="mb-6">
+            <label className="block text-black font-semibold mb-1">Payment Mode</label>
+            <select value={expense.payment_mode}
+              onChange={(e) => setExpense({ ...expense, payment_mode: e.target.value })}
+              className="w-full border border-gray-300 rounded px-3 py-2 text-black">
+              <option value="cash">Cash</option>
+              <option value="bank">Bank Transfer</option>
+              <option value="upi">UPI</option>
+              <option value="cheque">Cheque</option>
+            </select>
+          </div>
+
+          <div className="bg-blue-50 border border-blue-200 rounded p-4 mb-6">
+            <div className="space-y-2">
+              <div className="flex justify-between text-black">
+                <span>Base Amount:</span>
+                <span className="font-semibold">₹{expense.amount.toFixed(2)}</span>
+              </div>
+              {expense.gst_applicable && (
+                <div className="flex justify-between text-black">
+                  <span>GST ({expense.gst_rate}%):</span>
+                  <span className="font-semibold">₹{expense.gst_amount.toFixed(2)}</span>
+                </div>
+              )}
+              <div className="flex justify-between text-black text-xl font-bold border-t border-blue-300 pt-2">
+                <span>Total Expense:</span>
+                <span>₹{(expense.gst_applicable ? expense.total_amount : expense.amount).toFixed(2)}</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="mb-6">
+            <label className="block text-black font-semibold mb-1">Narration</label>
+            <textarea value={expense.narration}
+              onChange={(e) => setExpense({ ...expense, narration: e.target.value })}
+              placeholder="Expense details..."
+              className="w-full border border-gray-300 rounded px-3 py-2 text-black" rows={2} />
+          </div>
+
+          <div className="text-center">
+            <button onClick={saveExpense} disabled={loading}
+              className="bg-blue-600 text-white px-8 py-3 rounded text-lg font-bold hover:bg-blue-700 disabled:bg-gray-400">
+              {loading ? 'Saving...' : '💾 Save Expense'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
