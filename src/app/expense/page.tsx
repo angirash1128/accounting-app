@@ -37,10 +37,18 @@ export default function Expense() {
   }
 
   const saveExpense = async () => {
-    if (!expense.party_name) { alert('Party name daalo!'); return }
-    if (expense.amount <= 0) { alert('Amount daalo!'); return }
+    if (!expense.party_name) { alert('Please enter party name!'); return }
+    if (expense.amount <= 0) { alert('Please enter amount!'); return }
     setLoading(true)
     try {
+      // ✅ Get Current Logged In User
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        alert('Please login first!')
+        router.push('/login')
+        return
+      }
+
       await supabase.from('transactions').insert({
         type: 'expense',
         number: expense.number,
@@ -51,7 +59,8 @@ export default function Expense() {
         gst_amount: expense.gst_amount,
         total_amount: expense.gst_applicable ? expense.total_amount : expense.amount,
         narration: `${expense.category.toUpperCase()} | ${expense.payment_mode.toUpperCase()} | ${expense.narration}`,
-        status: 'active'
+        status: 'active',
+        user_id: session.user.id  // ✅ User ID Save Ho Raha Hai
       })
 
       setSaved(true)
@@ -80,7 +89,7 @@ export default function Expense() {
     <div className="min-h-screen bg-gray-50 p-4">
       <div className="max-w-3xl mx-auto">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold text-black">Expense Voucher</h1>
+          <h1 className="text-2xl font-bold text-black">📋 Expense Voucher</h1>
           <button
             onClick={() => router.push('/dashboard')}
             className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"

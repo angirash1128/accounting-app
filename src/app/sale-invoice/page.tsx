@@ -49,9 +49,17 @@ export default function SaleInvoice() {
   const grandTotal = subtotal + totalGst
 
   const saveInvoice = async () => {
-    if (!invoice.party_name) { alert('Party name daalo!'); return }
+    if (!invoice.party_name) { alert('Please enter party name!'); return }
     setLoading(true)
     try {
+      // ✅ Get Current Logged In User
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        alert('Please login first!')
+        router.push('/login')
+        return
+      }
+
       const { data: txn, error: txnError } = await supabase
         .from('transactions')
         .insert({
@@ -64,7 +72,8 @@ export default function SaleInvoice() {
           gst_amount: totalGst,
           total_amount: grandTotal,
           narration: invoice.narration,
-          status: 'active'
+          status: 'active',
+          user_id: session.user.id  // ✅ User ID Save Ho Raha Hai
         })
         .select()
         .single()
@@ -103,7 +112,7 @@ export default function SaleInvoice() {
     <div className="min-h-screen bg-gray-50 p-4">
       <div className="max-w-5xl mx-auto">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold text-black">Sale Invoice</h1>
+          <h1 className="text-2xl font-bold text-black">📄 Sale Invoice</h1>
           <button
             onClick={() => router.push('/dashboard')}
             className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"

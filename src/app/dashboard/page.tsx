@@ -18,13 +18,31 @@ export default function Dashboard() {
   const router = useRouter()
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [loading, setLoading] = useState(true)
+  const [userName, setUserName] = useState('')
+
+  // Check if user is logged in
+  useEffect(() => {
+    const checkUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        router.push('/login')
+        return
+      }
+      setUserName(session.user.user_metadata?.full_name || session.user.email || 'User')
+    }
+    checkUser()
+  }, [router])
 
   const fetchData = useCallback(async () => {
     setLoading(true)
     try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) return
+
       const { data, error } = await supabase
         .from('transactions')
         .select('*')
+        .eq('user_id', session.user.id)
         .eq('status', 'active')
         .order('date', { ascending: false })
 
@@ -51,6 +69,12 @@ export default function Dashboard() {
       window.removeEventListener('popstate', handleFocus)
     }
   }, [fetchData])
+
+  // Logout Function
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
+    router.push('/login')
+  }
 
   const sales = transactions.filter(t => t.type === 'sale')
   const purchases = transactions.filter(t => t.type === 'purchase')
@@ -91,8 +115,13 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-gray-50 p-4">
       <div className="max-w-6xl mx-auto">
+
+        {/* Header with User Name and Logout */}
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold text-black">Dashboard</h1>
+          <div>
+            <h1 className="text-2xl font-bold text-black">📊 Dashboard</h1>
+            <p className="text-sm text-gray-500">Welcome, {userName}</p>
+          </div>
           <div className="flex gap-2">
             <button
               onClick={fetchData}
@@ -101,10 +130,10 @@ export default function Dashboard() {
               🔄 Refresh
             </button>
             <button
-              onClick={() => router.push('/')}
-              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+              onClick={handleLogout}
+              className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
             >
-              Logout
+              🚪 Logout
             </button>
           </div>
         </div>
@@ -113,6 +142,7 @@ export default function Dashboard() {
           <div className="text-center text-black text-lg py-8">Loading...</div>
         ) : (
           <>
+            {/* Summary Cards Row 1 */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
               <div className="bg-white rounded-lg shadow p-4 border-l-4 border-green-500">
                 <p className="text-black text-sm">Total Sales</p>
@@ -140,6 +170,7 @@ export default function Dashboard() {
               </div>
             </div>
 
+            {/* Summary Cards Row 2 */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
               <div className="bg-white rounded-lg shadow p-4 border-l-4 border-red-500">
                 <p className="text-black text-sm">Total Expenses</p>
@@ -163,6 +194,7 @@ export default function Dashboard() {
               </div>
             </div>
 
+            {/* Quick Menu */}
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
               {menuItems.map(item => (
                 <button
@@ -176,8 +208,9 @@ export default function Dashboard() {
               ))}
             </div>
 
+            {/* Recent Transactions */}
             <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-lg font-bold text-black mb-4">Recent Transactions</h2>
+              <h2 className="text-lg font-bold text-black mb-4">📋 Recent Transactions</h2>
               {recentTransactions.length === 0 ? (
                 <p className="text-center text-black py-4">No transactions yet. Start by creating a Sale Invoice!</p>
               ) : (

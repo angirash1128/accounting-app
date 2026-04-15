@@ -18,10 +18,18 @@ export default function Receipt() {
   const [loading, setLoading] = useState(false)
 
   const saveReceipt = async () => {
-    if (!receipt.party_name) { alert('Party name daalo!'); return }
-    if (receipt.amount <= 0) { alert('Amount daalo!'); return }
+    if (!receipt.party_name) { alert('Please enter party name!'); return }
+    if (receipt.amount <= 0) { alert('Please enter amount!'); return }
     setLoading(true)
     try {
+      // ✅ Get Current Logged In User
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        alert('Please login first!')
+        router.push('/login')
+        return
+      }
+
       await supabase.from('transactions').insert({
         type: 'receipt',
         number: receipt.number,
@@ -30,7 +38,8 @@ export default function Receipt() {
         amount: receipt.amount,
         total_amount: receipt.amount,
         narration: `${receipt.receipt_mode.toUpperCase()} | Against: ${receipt.against_invoice || 'N/A'} | ${receipt.narration}`,
-        status: 'active'
+        status: 'active',
+        user_id: session.user.id  // ✅ User ID Save Ho Raha Hai
       })
 
       setSaved(true)
@@ -55,7 +64,7 @@ export default function Receipt() {
     <div className="min-h-screen bg-gray-50 p-4">
       <div className="max-w-3xl mx-auto">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold text-black">Receipt Voucher</h1>
+          <h1 className="text-2xl font-bold text-black">💰 Receipt Voucher</h1>
           <button
             onClick={() => router.push('/dashboard')}
             className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"

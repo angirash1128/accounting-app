@@ -54,10 +54,18 @@ export default function Payment() {
   }
 
   const savePayment = async () => {
-    if (!payment.party_name) { alert('Party name daalo!'); return }
-    if (payment.amount <= 0) { alert('Amount daalo!'); return }
+    if (!payment.party_name) { alert('Please enter party name!'); return }
+    if (payment.amount <= 0) { alert('Please enter amount!'); return }
     setLoading(true)
     try {
+      // ✅ Get Current Logged In User
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        alert('Please login first!')
+        router.push('/login')
+        return
+      }
+
       await supabase.from('transactions').insert({
         type: 'payment',
         number: payment.number,
@@ -68,7 +76,8 @@ export default function Payment() {
         tds_amount: payment.tds_amount,
         total_amount: payment.tds_applicable ? payment.net_amount : payment.amount,
         narration: `${payment.payment_mode.toUpperCase()} | TDS: ${payment.tds_applicable ? payment.tds_section : 'N/A'} | ${payment.narration}`,
-        status: 'active'
+        status: 'active',
+        user_id: session.user.id  // ✅ User ID Save Ho Raha Hai
       })
 
       setSaved(true)
@@ -97,7 +106,7 @@ export default function Payment() {
     <div className="min-h-screen bg-gray-50 p-4">
       <div className="max-w-3xl mx-auto">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold text-black">Payment Voucher</h1>
+          <h1 className="text-2xl font-bold text-black">💸 Payment Voucher</h1>
           <button
             onClick={() => router.push('/dashboard')}
             className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"

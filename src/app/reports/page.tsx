@@ -40,9 +40,17 @@ export default function Reports() {
   const fetchTransactions = async () => {
     setLoading(true)
     try {
+      // ✅ Get Current Logged In User
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        router.push('/login')
+        return
+      }
+
       const { data, error } = await supabase
         .from('transactions')
         .select('*')
+        .eq('user_id', session.user.id)  // ✅ Sirf Apna Data
         .gte('date', fromDate)
         .lte('date', toDate)
         .eq('status', 'active')
@@ -74,7 +82,6 @@ export default function Reports() {
   const totalSalesGST = sales.reduce((sum, t) => sum + (t.gst_amount || 0), 0)
   const totalPurchaseGST = purchases.reduce((sum, t) => sum + (t.gst_amount || 0), 0)
   const totalExpenseGST = expenses.reduce((sum, t) => sum + (t.gst_amount || 0), 0)
-
   const totalTDS = payments.reduce((sum, t) => sum + (t.tds_amount || 0), 0)
 
   const grossProfit = totalSales - totalPurchases
@@ -84,7 +91,6 @@ export default function Reports() {
   const gstCredit = totalPurchaseGST + totalExpenseGST
   const netGST = gstPayable - gstCredit
 
-  // Balance Sheet Calculations - Assets = Liabilities
   const cashBank = totalReceipts - totalPayments - totalExpenses
   const accountsReceivable = totalSalesWithGST - totalReceipts
   const tdsReceivable = totalTDS
@@ -96,7 +102,6 @@ export default function Reports() {
   const capital = totalAssets - accountsPayable - gstLiability + gstAsset
   const totalLiabilities = accountsPayable + gstLiability + capital
 
-  // Trial Balance - Debit = Credit
   const trialDebit = totalPurchasesWithGST + totalExpenses + totalReceipts + tdsReceivable + (netGST < 0 ? Math.abs(netGST) : 0)
   const trialCredit = totalSalesWithGST + totalPayments + (netGST > 0 ? netGST : 0)
   const trialDifference = trialDebit - trialCredit
@@ -116,13 +121,13 @@ export default function Reports() {
     <div className="min-h-screen bg-gray-50 p-4">
       <div className="max-w-6xl mx-auto">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold text-black">Reports</h1>
+          <h1 className="text-2xl font-bold text-black">📊 Reports</h1>
           <button
-  onClick={() => router.push('/dashboard')}
-  className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
->
-  ← Dashboard
-</button>
+            onClick={() => router.push('/dashboard')}
+            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+          >
+            ← Dashboard
+          </button>
         </div>
 
         <div className="bg-white rounded-lg shadow p-4 mb-6">
@@ -533,7 +538,6 @@ export default function Reports() {
                     </tr>
                   </tbody>
                 </table>
-
                 <div className="mt-4 bg-blue-50 p-3 rounded text-center">
                   <span className="text-black font-bold text-lg">
                     ✅ Debit = Credit (Balanced)
